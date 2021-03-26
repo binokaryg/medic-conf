@@ -120,9 +120,22 @@ function emitTasks(taskDefinition, Utils, Task, emit, c, r) {
         readyStart: event.start || 0,
         readyEnd: event.end || 0,
         title: taskDefinition.title,
-        resolved: taskDefinition.resolvedIf(c, r, event, dueDate, scheduledTaskIdx),
         actions: taskDefinition.actions.map(initActions),
       };
+
+
+      if (typeof taskDefinition.resolvedIf === 'function') {
+        prepareDefinition(taskDefinition, {
+          contact: c,
+          report: r,
+          event: event,
+          dueDate: dueDate
+        });
+        task.resolved = taskDefinition.resolvedIf(c, r, event, dueDate, scheduledTaskIdx);
+      }
+      else {
+        task.resolved = Utils.defaultResolvedIf(c, r, event, dueDate, taskDefinition.actions[0].form);
+      }
 
       if (scheduledTaskIdx !== undefined) {
         task._id += '-' + scheduledTaskIdx;

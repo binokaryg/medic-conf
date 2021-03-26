@@ -4,17 +4,32 @@ Definition-preparation.js binds a value for `this` in all the functions within a
 This fascilitates simple data sharing between functions, and allows function logic to reference the definition itself.
 */
 
-function prepare(definition) {
+function prepare(definition, taskExtras) {
   var targetContext = {};
-  bindAllFunctionsToContext(definition, targetContext);
+  bindAllFunctionsToContext(definition, targetContext, !taskExtras);
   targetContext.definition = deepCopy(definition);
+  if (taskExtras) {
+    //targetContext.taskExtras = taskExtras;
+    targetContext.defaultResolvedIf = function defaultResolvedIf() {
+      return Utils.defaultResolvedIf(
+        taskExtras.contact,//deprecated
+        taskExtras.report,
+        taskExtras.event,
+        taskExtras.dueDate,
+        this.definition.actions[0].form
+      );
+    };
+
+  }
+
 }
 
-function bindAllFunctionsToContext(obj, context) {
+function bindAllFunctionsToContext(obj, context, skipResolvedIf) {
   var keys = Object.keys(obj);
   for (var i in keys) {
     var key = keys[i];
-    switch(typeof obj[key]) {
+    if (obj.appliesTo === 'reports' && key === 'resolvedIf' && skipResolvedIf) { continue; }
+    switch (typeof obj[key]) {
       case 'object':
         bindAllFunctionsToContext(obj[key], context);
         break;
