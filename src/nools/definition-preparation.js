@@ -8,6 +8,9 @@ function prepare(definition) {
   var targetContext = {};
   bindAllFunctionsToContext(definition, targetContext);
   targetContext.definition = deepCopy(definition);
+  targetContext.defaultResolvedIf = function (contact, report, event, dueDate, resolvingForm) {
+    return Utils.defaultResolvedIf(contact, report, event, dueDate, resolvingForm || this.definition.actions[0].form);
+  };
 }
 
 function bindAllFunctionsToContext(obj, context) {
