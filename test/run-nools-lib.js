@@ -19,6 +19,28 @@ const runNoolsLib = ({ c, targets, tasks }) => {
       },
       now: () => new Date(TEST_DATE),
       isTimely: function() { return true; },
+      isFormSubmittedInWindow: function(reports, form, start, end, count) {
+        let result = false;
+        reports.forEach(function(report) {
+          if (!result && report.form === form) {
+            if (report.reported_date >= start && report.reported_date <= end) {
+              if (!count ||
+                 (count && report.fields && report.fields.follow_up_count > count)) {
+                result = true;
+              }
+            }
+          }
+        });
+        return result;
+      },
+      defaultResolvedIf: function (contact, report, event, dueDate, resolvingForm) {
+        return this.isFormSubmittedInWindow(
+          contact.reports,
+          resolvingForm,
+          report ? Math.max(this.addDate(dueDate, -event.start).getTime(), report.reported_date + 1) : this.addDate(dueDate, -event.start).getTime(),
+          this.addDate(dueDate, event.end + 1).getTime()
+        );
+      }
     },
     Target: function(props) {
       this._id = props._id;
