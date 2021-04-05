@@ -4,27 +4,16 @@ Definition-preparation.js binds a value for `this` in all the functions within a
 This fascilitates simple data sharing between functions, and allows function logic to reference the definition itself.
 */
 
-function prepare(definition, Utils) {
+function prepare(definition, defaultResolvedIf, Utils) {
   var targetContext = {};
   bindAllFunctionsToContext(definition, targetContext);
   targetContext.definition = deepCopy(definition);
-  targetContext.defaultResolvedIf = function (contact, report, event, dueDate, resolvingForm) {
-    var start = 0;
-    if (report) {//Report based task
-      //Start of the task window or after the report's reported date, whichever comes later
-      start = Math.max(Utils.addDate(dueDate, -event.start).getTime(), report.reported_date + 1);
-    }
-    else {
-      start = Utils.addDate(dueDate, -event.start).getTime();
-    }
-    var end = Utils.addDate(dueDate, event.end + 1).getTime();
-    return Utils.isFormSubmittedInWindow(
-      contact.reports,
-      resolvingForm || this.definition.actions[0].form,
-      start,
-      end
-    );
-  };
+  if (defaultResolvedIf) {
+    targetContext.defaultResolvedIf = function (contact, report, event, dueDate, resolvingForm) {
+      return defaultResolvedIf(contact, report, event, dueDate, resolvingForm || definition.actions[0].form, Utils);
+    };
+
+  }
 }
 
 function bindAllFunctionsToContext(obj, context) {

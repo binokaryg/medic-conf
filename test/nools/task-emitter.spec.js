@@ -383,6 +383,41 @@ describe('task-emitter', () => {
 
       });
 
+      it('this.defaultResolvedIf can be used with specific resolving form', () => {
+        // given
+        const config = {
+          c: personWithReports(aReport()),
+          targets: [],
+          tasks: [aReportBasedTask()],
+        };
+
+        config.tasks[0].resolvedIf = function (contact, report, event, dueDate) {
+          return this.defaultResolvedIf(contact, report, event, dueDate, 'specific-form');
+        };
+
+        // when
+        const { emitted } = runNoolsLib(config);
+
+        // then
+        expect(emitted[0]).to.nested.include({
+          'actions[0].content.source_id': 'r-1',
+          resolved: false,//not resolved
+        });
+
+        //given
+        const resolvingReport = aReport();
+        resolvingReport.form = 'specific-form';
+        resolvingReport.reported_date = TEST_DATE + 1;
+
+        //when
+        config.c.reports.push(resolvingReport);
+        let emittedAgain = runNoolsLib(config).emitted;
+
+        //then
+        expect(emittedAgain[0].resolved).to.be.true;//resolved
+
+      });
+
       it('should emit once per report', () => {
         // given
         const config = {
