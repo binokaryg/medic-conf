@@ -33,14 +33,6 @@ const runNoolsLib = ({ c, targets, tasks }) => {
         });
         return result;
       },
-      defaultResolvedIf: function (contact, report, event, dueDate, resolvingForm) {
-        return this.isFormSubmittedInWindow(
-          contact.reports,
-          resolvingForm,
-          report ? Math.max(this.addDate(dueDate, -event.start).getTime(), report.reported_date + 1) : this.addDate(dueDate, -event.start).getTime(),
-          this.addDate(dueDate, event.end + 1).getTime()
-        );
-      }
     },
     Target: function(props) {
       this._id = props._id;

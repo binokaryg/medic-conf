@@ -6,7 +6,7 @@ function taskEmitter(taskDefinitions, c, Utils, Task, emit) {
   var taskDefinition, r;
   for (var idx1 = 0; idx1 < taskDefinitions.length; ++idx1) {
     taskDefinition = taskDefinitions[idx1];
-    prepareDefinition(taskDefinition);
+    prepareDefinition(taskDefinition, Utils);
 
     switch (taskDefinition.appliesTo) {
       case 'reports':
@@ -127,7 +127,21 @@ function emitTasks(taskDefinition, Utils, Task, emit, c, r) {
         task.resolved = taskDefinition.resolvedIf(c, r, event, dueDate, scheduledTaskIdx);
       }
       else {
-        task.resolved = Utils.defaultResolvedIf(c, r, event, dueDate, taskDefinition.actions[0].form);
+        var start = 0;
+        if (r) {//Report based task
+          //Start of the task window or after the report's reported date, whichever comes later
+          start = Math.max(Utils.addDate(dueDate, -event.start).getTime(), r.reported_date + 1);
+        }
+        else {
+          start = Utils.addDate(dueDate, -event.start).getTime();
+        }
+        var end = Utils.addDate(dueDate, event.end + 1).getTime();
+        task.resolved = Utils.isFormSubmittedInWindow(
+          c.reports,
+          taskDefinition.actions[0].form,
+          start,
+          end
+        );
       }
 
       if (scheduledTaskIdx !== undefined) {

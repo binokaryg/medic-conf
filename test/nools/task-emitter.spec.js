@@ -2,6 +2,7 @@ const chai = require('chai');
 const sinon = require('sinon');
 const runNoolsLib = require('../run-nools-lib');
 const {
+  TEST_DATE,
   TEST_DAY,
   reset,
   aReportBasedTask,
@@ -98,25 +99,6 @@ describe('task-emitter', () => {
         assert.shallowDeepEqual(emitted, [
           { _type:'_complete', _id: true },
         ]);
-      });
-
-      it('resolvedIf is not required', () => {
-        // given
-        const config = {
-          c: personWithReports(aReport()),
-          targets: [],
-          tasks: [ aPersonBasedTask() ],
-        };
-        delete config.tasks[0].resolvedIf;
-
-        // when
-        const { emitted } = runNoolsLib(config);
-
-        // then
-        expect(emitted[0]).to.nested.include({
-          'actions[0].content.source_id': 'c-2',
-          resolved: false,
-        });
       });
 
       it('emitted task for configurable hierarchy contact', () => {
@@ -311,7 +293,7 @@ describe('task-emitter', () => {
         const config = {
           c: personWithReports(aReport()),
           targets: [],
-          tasks: [ aReportBasedTask() ],
+          tasks: [aReportBasedTask()],
         };
         delete config.tasks[0].resolvedIf;
 
@@ -323,6 +305,82 @@ describe('task-emitter', () => {
           'actions[0].content.source_id': 'r-1',
           resolved: false,
         });
+      });
+
+      it('this.defaultResolvedIf can be passed to resolvedIf', () => {
+        // given
+        const config = {
+          c: personWithReports(aReport()),
+          targets: [],
+          tasks: [aReportBasedTask()],
+        };
+
+        config.tasks[0].resolvedIf = this.defaultResolvedIf;
+
+        // when
+        const { emitted } = runNoolsLib(config);
+
+        // then
+        expect(emitted[0]).to.nested.include({
+          'actions[0].content.source_id': 'r-1',
+          resolved: false,
+        });
+
+        //given
+        const resolvingReport = aReport();
+        resolvingReport.form = 'example-form';
+        resolvingReport.reported_date = TEST_DATE + 1;
+
+        //when
+        config.c.reports.push(resolvingReport);
+        const emittedAgain = runNoolsLib(config).emitted;
+
+        //then
+        expect(emittedAgain[0].resolved).to.be.true;
+      });
+
+      it('this.defaultResolvedIf can be used inside resolvedIf', () => {
+        // given
+        const config = {
+          c: personWithReports(aReport()),
+          targets: [],
+          tasks: [aReportBasedTask()],
+        };
+
+        config.tasks[0].resolvedIf = function (contact, report, event, dueDate) {
+          return this.defaultResolvedIf(contact, report, event, dueDate) && false;//never resolved
+        };
+
+        // when
+        const { emitted } = runNoolsLib(config);
+
+        // then
+        expect(emitted[0]).to.nested.include({
+          'actions[0].content.source_id': 'r-1',
+          resolved: false,//not resolved
+        });
+
+        //given
+        const resolvingReport = aReport();
+        resolvingReport.form = 'example-form';
+        resolvingReport.reported_date = TEST_DATE + 1;
+
+        //when
+        config.c.reports.push(resolvingReport);
+        let emittedAgain = runNoolsLib(config).emitted;
+
+        //then
+        expect(emittedAgain[0].resolved).to.be.false;//still not resolved
+
+        //when
+        config.tasks[0].resolvedIf = function (contact, report, event, dueDate) {
+          return this.defaultResolvedIf(contact, report, event, dueDate);
+        };
+        emittedAgain = runNoolsLib(config).emitted;
+
+        //then
+        expect(emittedAgain[0].resolved).to.be.true;//resolved
+
       });
 
       it('should emit once per report', () => {
@@ -414,7 +472,7 @@ describe('task-emitter', () => {
         expect(emitted[0].date.getTime()).to.eq(expected.getTime());
       });
 
-      it('given task definition without resolved_date, resolvedIf defaults to Utils.resolvedIf and resolves the task', () => {
+      it('given task definition without resolved_date, resolvedIf defaults to default and resolves the task', () => {
         sinon.useFakeTimers();
 
         // given
