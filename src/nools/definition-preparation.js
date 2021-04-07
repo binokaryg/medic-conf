@@ -9,9 +9,16 @@ function prepare(definition, defaultResolvedIf, Utils) {
   bindAllFunctionsToContext(definition, targetContext);
   targetContext.definition = deepCopy(definition);
   if (defaultResolvedIf) {
-    targetContext.defaultResolvedIf = function (contact, report, event, dueDate, givenResolvingForm) {
-      var resolvingForm = givenResolvingForm || definition.actions.find(function (action) { return action.type === 'report'; }).form;
-      return defaultResolvedIf(contact, report, event, dueDate, resolvingForm || definition.actions[0].form, Utils);
+    targetContext.defaultResolvedIf = function (contact, report, event, dueDate, resolvingForm) {
+      var reportAction;
+      if(!resolvingForm) {
+        reportAction = definition.actions.find(function (action) { return action.type === 'report'; });
+        if(!reportAction) {
+          throw new Error('Could not find the default resolving form. You need to provide the resolvingForm when using "this.defaultResolvedIf(contact, report, event, dueDate, resolvingForm)"'
+            + 'if you don\'t have any action with "type: \'report\'".');
+        }
+      }
+      return defaultResolvedIf(contact, report, event, dueDate, resolvingForm || reportAction.form, Utils);
     };
 
   }
