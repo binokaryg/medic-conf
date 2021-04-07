@@ -167,10 +167,10 @@ const validate = (filename, fileContent, schema) => {
     return [result.error.message];
   }
 
-  return result.error.details.map(detail => formatjoiError(filename, detail));
+  return result.error.details.map(detail => formatJoiError(filename, detail));
 };
 
-const formatjoiError = (desc, detail) => {
+const formatJoiError = (desc, detail) => {
   const { context } = detail;
   if (detail.type === 'array.unique') {
     return `${desc}${context.label} contains duplicate value for the "${context.path}" field: "${context.value[context.path]}"`;
