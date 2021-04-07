@@ -9,7 +9,8 @@ function prepare(definition, defaultResolvedIf, Utils) {
   bindAllFunctionsToContext(definition, targetContext);
   targetContext.definition = deepCopy(definition);
   if (defaultResolvedIf) {
-    targetContext.defaultResolvedIf = function (contact, report, event, dueDate, resolvingForm) {
+    targetContext.defaultResolvedIf = function (contact, report, event, dueDate, givenResolvingForm) {
+      var resolvingForm = givenResolvingForm || definition.actions.find(function (action) { return action.type === 'report'; }).form;
       return defaultResolvedIf(contact, report, event, dueDate, resolvingForm || definition.actions[0].form, Utils);
     };
 

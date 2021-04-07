@@ -104,8 +104,11 @@ const TaskSchema = joi.array().items(
     contactLabel:
       joi.alternatives().try( joi.string().min(1), joi.function() ).optional()
       .error(taskError('"contactLabel" should either be a non-empty string or function(contact, report)')),
-    resolvedIf: joi.function().optional()
-      .error(taskError('"resolvedIf" should be of type function(contact, report)')),
+      resolvedIf: joi.alternatives().conditional('actions', {
+        is: joi.array().items(joi.object({ type: 'contact' }).unknown()),
+        then: joi.function().required(),
+        otherwise: joi.function().optional()
+      }),
     events: joi.alternatives().conditional('events', {
       is: joi.array().length(1),
       then: joi.array().items(EventSchema('optional')).min(1).required(),
@@ -164,10 +167,10 @@ const validate = (filename, fileContent, schema) => {
     return [result.error.message];
   }
 
-  return result.error.details.map(detail => formatJoiError(filename, detail));
+  return result.error.details.map(detail => formatjoiError(filename, detail));
 };
 
-const formatJoiError = (desc, detail) => {
+const formatjoiError = (desc, detail) => {
   const { context } = detail;
   if (detail.type === 'array.unique') {
     return `${desc}${context.label} contains duplicate value for the "${context.path}" field: "${context.value[context.path]}"`;
