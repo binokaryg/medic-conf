@@ -17,8 +17,9 @@ function prepare(definition, defaultResolvedIf, Utils) {
           throw new Error('Could not find the default resolving form. You need to provide the resolvingForm when using "this.defaultResolvedIf(contact, report, event, dueDate, resolvingForm)"'
             + 'if you don\'t have any action with "type: \'report\'".');
         }
+        return defaultResolvedIf(contact, report, event, dueDate, reportAction.form, Utils);
       }
-      return defaultResolvedIf(contact, report, event, dueDate, resolvingForm || reportAction.form, Utils);
+      return defaultResolvedIf(contact, report, event, dueDate, resolvingForm, Utils);
     };
 
   }
