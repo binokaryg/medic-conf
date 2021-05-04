@@ -18,6 +18,17 @@ const {
   placeWithoutReports,
 } = require('./mocks');
 
+const utilsMock = {
+  now: sinon.stub().returns(new Date(TEST_DATE)),
+  isTimely: sinon.stub().returns(true),
+  isFormSubmittedInWindow: sinon.stub().returns(true),
+  addDate: function (date, days) {
+    const d = new Date(date.getTime());
+    d.setDate(d.getDate() + days);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+};
 const { assert, expect } = chai;
 chai.use(require('chai-shallow-deep-equal'));
 
@@ -584,32 +595,24 @@ describe('task-emitter', () => {
           c: personWithReports(aReport()),
           targets: [],
           tasks: [aPersonBasedTask()],
+          utilsMock
         };
         delete config.tasks[0].resolvedIf;
         // when
         const { emitted } = runNoolsLib(config);
-
         //then
-        expect(emitted[0].resolved).to.be.false;
-        
-        //given
-        const resolvingReport = aReport();
-        resolvingReport.form = 'example-form';
 
-        //when
-        config.c.reports.push(resolvingReport);
-        const emittedAgain = runNoolsLib(config).emitted;
-
-        //then
-        expect(emittedAgain[0].resolved).to.be.true;
+        expect(utilsMock.isFormSubmittedInWindow.callCount).to.equal(1);
+        expect(emitted[0].resolved).to.be.true;
       });
-      
+
       it('this.definition.defaultResolvedIf can be used inside resolvedIf', () => {
         // given
         const config = {
           c: personWithReports(aReport()),
           targets: [],
           tasks: [aReportBasedTask()],
+          utilsMock
         };
 
         config.tasks[0].resolvedIf = function (contact, report, event, dueDate) {
