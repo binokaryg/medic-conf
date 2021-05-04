@@ -82,9 +82,9 @@ function emitTasks(taskDefinition, Utils, Task, emit, c, r) {
     } else {
       contactLabel = taskDefinition.contactLabel;
     }
-  
+
     return contactLabel ? { name: contactLabel } : c.contact;
-  }  
+  }
 
   function emitForEvents(scheduledTaskIdx) {
     var i, dueDate = null, event, priority, task;
@@ -146,7 +146,13 @@ function emitTasks(taskDefinition, Utils, Task, emit, c, r) {
     }
   }
 
-  function initActions(def) {
+  function initActions(actions, event) {
+    return taskDefinition.actions.map(function(action) {
+      return initAction(action, event);
+    });
+  }
+
+  function initAction(action, event) {
     var appliesToReport = !!r;
     var content = {
       source: 'task',
@@ -154,14 +160,14 @@ function emitTasks(taskDefinition, Utils, Task, emit, c, r) {
       contact: c.contact,
     };
 
-    if (def.modifyContent) {
-      def.modifyContent(content, c, r);
+    if (action.modifyContent) {
+      action.modifyContent(content, c, r, event);
     }
 
     return {
-      type: def.type || 'report',
-      form: def.form,
-      label: def.label || 'Follow up',
+      type: action.type || 'report',
+      form: action.form,
+      label: action.label || 'Follow up',
       content: content,
     };
   }
